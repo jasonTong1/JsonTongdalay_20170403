@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.3.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+        
+    <!--属性占位文件引入，可以通过${属性名}获得属性文件中的内容-->
+    <context:property-placeholder location="classpath:db.properties"/>
+    <!--定义一个jdbc数据源，创建一个驱动管理数据源的bean -->
+<!--     <bean id="jdbcDataSource"
+        class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driver}" />
+        <property name="url" value="${jdbc.url}" />
+        <property name="username" value="${jdbc.uid}" />
+        <property name="password" value="${jdbc.pwd}" />
+    </bean> -->
+<!--     <bean id="jdbcDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+        <property name="url" value="${jdbc.url}" />
+        <property name="username" value="${jdbc.uid}" />
+        <property name="password" value="${jdbc.pwd}" />
+        <property name="maxActive" value="100"></property>
+        <property name="maxIdle" value="30"></property>
+        <property name="maxWait" value="500"></property>
+        <property name="defaultAutoCommit" value="true"></property>
+    </bean> -->
+    <!--定义一个jdbc数据源，创建一个驱动管理数据源的bean -->
+    <bean id="jdbcDataSource"
+        class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${jdbc.driver}" />
+        <property name="jdbcUrl" value="${jdbc.url}" />
+        <property name="user" value="${jdbc.uid}" />
+        <property name="password" value="${jdbc.pwd}" />
+        <property name="acquireIncrement" value="5"></property>
+        <property name="initialPoolSize" value="10"></property>
+        <property name="minPoolSize" value="5"></property>
+        <property name="maxPoolSize" value="20"></property>
+    </bean>
+        <!--创建一个sql会话工厂bean，指定数据源 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 1指定数据源 -->
+        <property name="dataSource" ref="jdbcDataSource" />
+        <!-- 2类型别名包，默认引入com.zhangguo.Spring61.entities下的所有类 -->
+        <property name="typeAliasesPackage" value="com.zhangguo.Spring61.entities"></property>
+        <!-- 3指定sql映射xml文件的路径 -->
+        <property name="mapperLocations"
+            value="classpath:com/zhangguo/Spring61/mapping/*Mapper.xml"></property>
+    </bean>
+
+    <!--3创建一个booTypeDAO-->
+    <bean id="bookTypeDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <!--指定映射文件 -->
+        <property name="mapperInterface" value="com.zhangguo.Spring61.mapping.BookTypeDAO"></property>
+        <!-- 指定sql会话工厂-->
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+    </bean>
+    
+	<!-- 创建一个sqlSession对象 -->
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory" />
+    </bean>
+    
+    <!--创建一个BTDImpl对象 -->
+    <bean id="bTDImpl" class="com.zhangguo.Spring61.dao.BTDImpl">
+        <property name="sqlSession" ref="sqlSession"></property>
+    </bean>
+    
+    	<context:annotation-config />
+    <!--下面的配置暂时未使用 -->
+    <context:component-scan base-package="com.zhangguo">
+    </context:component-scan>
+    <aop:aspectj-autoproxy proxy-target-class="true"></aop:aspectj-autoproxy>
+</beans>
